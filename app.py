@@ -214,10 +214,7 @@ def handle_mytopic(client, userdata, message):
         mqtt.publish('Frosty/state/pump', pump_status)
         mqtt.publish('Frosty/state/salt', salt_status)
         mqtt.publish('Frosty/state/aerator', aerator_status)
-        mqtt.publish('Frosty/state/aux1', aux1_status)
-        mqtt.publish('Frosty/state/aux2', aux2_status)
-        mqtt.publish('Frosty/state/aux3', aux3_status)
-        mqtt.publish('Frosty/state/aux4', aux4_status)
+        mqtt.publish('Frosty/state/speed', speed_state())
 
         temp_sensor1 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor1_ID)
         temp_sensor2 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor2_ID)
