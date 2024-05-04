@@ -218,7 +218,6 @@ def handle_mytopic(client, userdata, message):
         sensor2_temp = int(temp_sensor2.get_temperature(W1ThermSensor.DEGREES_F) + sensor2_offset)
         mqtt.publish('Frosty/temp/sensor1', sensor1_temp)
         mqtt.publish('Frosty/temp/sensor2', sensor2_temp)
-
         logging.info("MQTT Updated state info")
 
 mqtt.subscribe('Frosty/toggle/aerator')
