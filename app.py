@@ -33,8 +33,8 @@ temp_sensor1 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor1_ID
 temp_sensor2 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor2_ID)
 sensor1_temp = int(temp_sensor1.get_temperature(W1ThermSensor.DEGREES_F) + sensor1_offset)
 sensor2_temp = int(temp_sensor2.get_temperature(W1ThermSensor.DEGREES_F) + sensor2_offset)
-mqtt.publish('temp/sensor1', sensor1_temp)
-mqtt.publish('temp/sensor2', sensor2_temp)
+mqtt.publish('Frosty/temp/sensor1', sensor1_temp)
+mqtt.publish('Frosty/temp/sensor2', sensor2_temp)
 log_sensor1 = str(sensor1_temp)
 logging.info("sensor1: " + log_sensor1)
 log_sensor2 = str(sensor2_temp)
@@ -66,23 +66,23 @@ GPIO.setup(AUX4, GPIO.OUT)
 # ########################    MQTT   ########################## 
 
 #Inital test state and publish to MQTT on startup
-mqtt.publish('state/pump', GPIO.input(PUMP))
-mqtt.publish('state/salt', GPIO.input(SALT))
-mqtt.publish('state/light', GPIO.input(LIGHT))
-mqtt.publish('state/aerator', GPIO.input(AERATOR))
-mqtt.publish('state/aux1', GPIO.input(AUX1))
-mqtt.publish('state/aux2', GPIO.input(AUX2))
-mqtt.publish('state/aux3', GPIO.input(AUX3))
-mqtt.publish('state/aux4', GPIO.input(AUX4))
+mqtt.publish('Frosty/state/pump', GPIO.input(PUMP))
+mqtt.publish('Frosty/state/salt', GPIO.input(SALT))
+mqtt.publish('Frosty/state/light', GPIO.input(LIGHT))
+mqtt.publish('Frosty/state/aerator', GPIO.input(AERATOR))
+mqtt.publish('Frosty/state/aux1', GPIO.input(AUX1))
+mqtt.publish('Frosty/state/aux2', GPIO.input(AUX2))
+mqtt.publish('Frosty/state/aux3', GPIO.input(AUX3))
+mqtt.publish('Frosty/state/aux4', GPIO.input(AUX4))
 #TEST
-mqtt.publish('toggle/light', "off")
-mqtt.publish('toggle/pump', "off")
-mqtt.publish('toggle/salt', "off")
-mqtt.publish('toggle/aerator', "off")
-mqtt.publish('toggle/aux1', "off")
-mqtt.publish('toggle/aux2', "off")
-mqtt.publish('toggle/aux3', "off")
-mqtt.publish('toggle/aux4', "off")
+mqtt.publish('Frosty/toggle/light', "off")
+mqtt.publish('Frosty/toggle/pump', "off")
+mqtt.publish('Frosty/toggle/salt', "off")
+mqtt.publish('Frosty/toggle/aerator', "off")
+mqtt.publish('Frosty/toggle/aux1', "off")
+mqtt.publish('Frosty/toggle/aux2', "off")
+mqtt.publish('Frosty/toggle/aux3', "off")
+mqtt.publish('Frosty/toggle/aux4', "off")
 
 
 def mqtt_sensor_publish():
@@ -90,8 +90,8 @@ def mqtt_sensor_publish():
      temp_sensor2 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor2_ID)
      sensor1_temp = int(temp_sensor1.get_temperature(W1ThermSensor.DEGREES_F) + sensor1_offset)
      sensor2_temp = int(temp_sensor2.get_temperature(W1ThermSensor.DEGREES_F) + sensor2_offset)
-     mqtt.publish('temp/sensor1', sensor1_temp)
-     mqtt.publish('temp/sensor2', sensor2_temp)
+     mqtt.publish('Frosty/temp/sensor1', sensor1_temp)
+     mqtt.publish('Frosty/temp/sensor2', sensor2_temp)
      log_sensor1 = str(sensor1_temp)
      logging.info("sensor1: " + log_sensor1)
      log_sensor2 = str(sensor2_temp)
@@ -101,8 +101,8 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(func=mqtt_sensor_publish, trigger="interval", seconds=temp_sched)
 scheduler.start()
 
-mqtt.subscribe('toggle/pump')
-@mqtt.on_topic('toggle/pump')
+mqtt.subscribe('Frosty/toggle/pump')
+@mqtt.on_topic('Frosty/toggle/pump')
 def handle_mytopic(client, userdata, message):
    with app.app_context():
     status=int(GPIO.input(PUMP))
@@ -111,9 +111,9 @@ def handle_mytopic(client, userdata, message):
         GPIO.output(SALT, GPIO.HIGH)
         verify_pump_state = GPIO.input(SALT)
         verify_salt_state = GPIO.input(PUMP)
-        mqtt.publish('toggle/salt', "on")
-        mqtt.publish('state/pump', verify_pump_state)
-        mqtt.publish('state/salt', verify_salt_state)
+        mqtt.publish('Frosty/toggle/salt', "on")
+        mqtt.publish('Frosty/state/pump', verify_pump_state)
+        mqtt.publish('Frosty/state/salt', verify_salt_state)
         logging.info("MQTT - Pump turned on")
         logging.info("MQTT - Salt turned on")
     elif status == 1 and message.payload.decode() == "off": 
@@ -121,16 +121,16 @@ def handle_mytopic(client, userdata, message):
         GPIO.output(SALT, GPIO.LOW)
         verify_pump_state = GPIO.input(PUMP)
         verify_salt_state = GPIO.input(SALT)
-        mqtt.publish('state/pump', verify_pump_state)
-        mqtt.publish('state/salt', verify_salt_state)
-        mqtt.publish('toggle/salt', "off")
+        mqtt.publish('Frosty/state/pump', verify_pump_state)
+        mqtt.publish('Frosty/state/salt', verify_salt_state)
+        mqtt.publish('Frosty/toggle/salt', "off")
         logging.info("MQTT - Pump turned off")
         logging.info("MQTT - Salt turned off")
     else:
         logging.info("MQTT - Pump - Nah Bruh")
 
-mqtt.subscribe('toggle/salt')
-@mqtt.on_topic('toggle/salt')
+mqtt.subscribe('Frosty/toggle/salt')
+@mqtt.on_topic('Frosty/toggle/salt')
 def handle_mytopic(client, userdata, message):
     with app.app_context():
         salt_status=int(GPIO.input(SALT))
@@ -138,35 +138,35 @@ def handle_mytopic(client, userdata, message):
         if pump_status == 0 and message.payload.decode() == "on":
             GPIO.output(SALT, GPIO.LOW)
             verify_state = GPIO.input(SALT)
-            mqtt.publish('state/salt', verify_state)
+            mqtt.publish('Frosty/state/salt', verify_state)
             logging.info("MQTT - WARNING - You can't turn on the Salt system without the pump running") 
         elif pump_status == 1 and message.payload.decode() == "off":
             GPIO.output(SALT, GPIO.LOW)
             verify_state = GPIO.input(SALT)
             logging.info("MQTT - Salt turned off")
-            mqtt.publish('state/salt', verify_state)
+            mqtt.publish('Frosty/state/salt', verify_state)
         elif pump_status == 1 and message.payload.decode() == "on":
             GPIO.output(SALT, GPIO.HIGH)
             verify_state = GPIO.input(SALT)
             logging.info("MQTT - Salt turned on")
-            mqtt.publish('state/salt', verify_state)
-        else:s
+            mqtt.publish('Frosty/state/salt', verify_state)
+        else:
             logging.info("MQTT - Salt - Nah Bruh")
 
-mqtt.subscribe('toggle/light')
-@mqtt.on_topic('toggle/light')
+mqtt.subscribe('Frosty/toggle/light')
+@mqtt.on_topic('Frosty/toggle/light')
 def handle_mytopic(client, userdata, message):
     with app.app_context():
         status=int(GPIO.input(LIGHT))
         if status == 1 and message.payload.decode() == "off":
             GPIO.output(LIGHT, GPIO.LOW)
             verify_state = GPIO.input(LIGHT)
-            mqtt.publish('state/light', verify_state)
+            mqtt.publish('Frosty/state/light', verify_state)
             logging.info("MQTT - Light turned off")
         elif status== 0 and message.payload.decode() == "on":
             GPIO.output(LIGHT, GPIO.HIGH)
             verify_state = GPIO.input(LIGHT)
-            mqtt.publish('state/light', verify_state)
+            mqtt.publish('Frosty/state/light', verify_state)
             logging.info("MQTT - Light turned on")
         else:
             logging.info("MQTT - Light - Nah Bruh")
@@ -174,8 +174,8 @@ def handle_mytopic(client, userdata, message):
 # -- status/update is used when Home assistant restarts. 
 # -- It re-publishes the current state of all channels and temperature probes
 
-mqtt.subscribe('status/update')
-@mqtt.on_topic('status/update')
+mqtt.subscribe('Frosty/status/update')
+@mqtt.on_topic('Frosty/status/update')
 def handle_mytopic(client, userdata, message):
     with app.app_context():
         light_status=int(GPIO.input(LIGHT))
@@ -187,26 +187,26 @@ def handle_mytopic(client, userdata, message):
         aux3_status=int(GPIO.input(AUX3))
         aux4_status=int(GPIO.input(AUX4))
 
-        mqtt.publish('state/light', light_status)
-        mqtt.publish('state/pump', pump_status)
-        mqtt.publish('state/salt', salt_status)
-        mqtt.publish('state/aerator', aerator_status)
-        mqtt.publish('state/aux1', aux1_status)
-        mqtt.publish('state/aux2', aux2_status)
-        mqtt.publish('state/aux3', aux3_status)
-        mqtt.publish('state/aux4', aux4_status)
+        mqtt.publish('Frosty/state/light', light_status)
+        mqtt.publish('Frosty/state/pump', pump_status)
+        mqtt.publish('Frosty/state/salt', salt_status)
+        mqtt.publish('Frosty/state/aerator', aerator_status)
+        mqtt.publish('Frosty/state/aux1', aux1_status)
+        mqtt.publish('Frosty/state/aux2', aux2_status)
+        mqtt.publish('Frosty/state/aux3', aux3_status)
+        mqtt.publish('Frosty/state/aux4', aux4_status)
 
         temp_sensor1 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor1_ID)
         temp_sensor2 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor2_ID)
         sensor1_temp = int(temp_sensor1.get_temperature(W1ThermSensor.DEGREES_F) + sensor1_offset)
         sensor2_temp = int(temp_sensor2.get_temperature(W1ThermSensor.DEGREES_F) + sensor2_offset)
-        mqtt.publish('temp/sensor1', sensor1_temp)
-        mqtt.publish('temp/sensor2', sensor2_temp)
+        mqtt.publish('Frosty/temp/sensor1', sensor1_temp)
+        mqtt.publish('Frosty/temp/sensor2', sensor2_temp)
 
         logging.info("MQTT Updated state info")
 
-mqtt.subscribe('toggle/aerator')
-@mqtt.on_topic('toggle/aerator')
+mqtt.subscribe('Frosty/toggle/aerator')
+@mqtt.on_topic('Frosty/toggle/aerator')
 def handle_mytopic(client, userdata, message):
     with app.app_context():
         status=int(GPIO.input(AERATOR))
@@ -214,17 +214,17 @@ def handle_mytopic(client, userdata, message):
             GPIO.output(AERATOR, GPIO.LOW)
             verify_state = GPIO.input(AERATOR)
             logging.info("MQTT - Aerator turned off")
-            mqtt.publish('state/aerator', verify_state)
+            mqtt.publish('Frosty/state/aerator', verify_state)
         elif status== 0 and message.payload.decode() == "on":
             GPIO.output(AERATOR, GPIO.HIGH)
             verify_state = GPIO.input(AERATOR)
             logging.info("MQTT - Aerator turned on")
-            mqtt.publish('state/aerator', verify_state)
+            mqtt.publish('Frosty/state/aerator', verify_state)
         else:
             logging.info("MQTT - Aerator - Nah Bruh")
 
-mqtt.subscribe('toggle/aux1')
-@mqtt.on_topic('toggle/aux1')
+mqtt.subscribe('Frosty/toggle/aux1')
+@mqtt.on_topic('Frosty/toggle/aux1')
 def handle_mytopic(client, userdata, message):
     with app.app_context():
         status=int(GPIO.input(AUX1))
@@ -232,17 +232,17 @@ def handle_mytopic(client, userdata, message):
             GPIO.output(AUX1, GPIO.LOW)
             verify_state = GPIO.input(AUX1)
             logging.info("MQTT - Aux1 turned off")
-            mqtt.publish('state/aux1', verify_state)
+            mqtt.publish('Frosty/state/aux1', verify_state)
         elif status== 0 and message.payload.decode() == "on":
             GPIO.output(AUX1, GPIO.HIGH)
             verify_state = GPIO.input(AUX1)
             logging.info("MQTT - Aux1 turned on")
-            mqtt.publish('state/aux1', verify_state)
+            mqtt.publish('Frosty/state/aux1', verify_state)
         else:
             logging.info("MQTT - Aux1 - Nah Bruh")
 
-mqtt.subscribe('toggle/aux2')
-@mqtt.on_topic('toggle/aux2')
+mqtt.subscribe('Frosty/toggle/aux2')
+@mqtt.on_topic('Frosty/toggle/aux2')
 def handle_mytopic(client, userdata, message):
     with app.app_context():
         status=int(GPIO.input(AUX2))
@@ -250,17 +250,17 @@ def handle_mytopic(client, userdata, message):
             GPIO.output(AUX2, GPIO.LOW)
             verify_state = GPIO.input(AUX2)
             logging.info("MQTT - Aux2 turned off")
-            mqtt.publish('state/aux2', verify_state)
+            mqtt.publish('Frosty/state/aux2', verify_state)
         elif status== 0 and message.payload.decode() == "on":
             GPIO.output(AUX2, GPIO.HIGH)
             verify_state = GPIO.input(AUX2)
             logging.info("MQTT - Aux2 turned on")
-            mqtt.publish('state/aux2', verify_state)
+            mqtt.publish('Frosty/state/aux2', verify_state)
         else:
             logging.info("MQTT - Aux2 - Nah Bruh")
 
-mqtt.subscribe('toggle/aux3')
-@mqtt.on_topic('toggle/aux3')
+mqtt.subscribe('Frosty/toggle/aux3')
+@mqtt.on_topic('Frosty/toggle/aux3')
 def handle_mytopic(client, userdata, message):
     with app.app_context():
         status=int(GPIO.input(AUX3))
@@ -268,17 +268,17 @@ def handle_mytopic(client, userdata, message):
             GPIO.output(AUX3, GPIO.LOW)
             logging.info("MQTT - Aux3 turned off")
             verify_state = GPIO.input(AUX3)
-            mqtt.publish('state/aux3', verify_state)
+            mqtt.publish('Frosty/state/aux3', verify_state)
         elif status== 0 and message.payload.decode() == "on":
             GPIO.output(AUX3, GPIO.HIGH)
             verify_state = GPIO.input(AUX3)
             logging.info("MQTT - Aux3 turned on")
-            mqtt.publish('state/aux3', verify_state)
+            mqtt.publish('Frosty/state/aux3', verify_state)
         else:
             logging.info("MQTT - Aux - Nah Bruh")
 
-mqtt.subscribe('toggle/aux4')
-@mqtt.on_topic('toggle/aux4')
+mqtt.subscribe('Frosty/toggle/aux4')
+@mqtt.on_topic('Frosty/toggle/aux4')
 def handle_mytopic(client, userdata, message):
     with app.app_context():
         status=int(GPIO.input(AUX4))
@@ -286,12 +286,12 @@ def handle_mytopic(client, userdata, message):
             GPIO.output(AUX4, GPIO.LOW)
             verify_state = GPIO.input(AUX4)
             logging.info("MQTT - Aux4 turned off")
-            mqtt.publish('state/aux4', verify_state)
+            mqtt.publish('Frosty/state/aux4', verify_state)
         elif status == 0 and message.payload.decode() == "on":
             GPIO.output(AUX4, GPIO.HIGH)
             verify_state = GPIO.input(AUX4)
             logging.info("MQTT - Aux4 turned on")
-            mqtt.publish('state/aux4', verify_state)
+            mqtt.publish('Frosty/state/aux4', verify_state)
         else:
             logging.info("MQTT - Aux4 - Nah Bruh")
 
@@ -308,8 +308,8 @@ def pump_toggle():
         GPIO.output(SALT, GPIO.LOW)
         verify_pump_state = GPIO.input(PUMP)
         verify_salt_state = GPIO.input(SALT)
-        mqtt.publish('state/pump', verify_pump_state)
-        mqtt.publish('state/salt', verify_salt_state)
+        mqtt.publish('Frosty/state/pump', verify_pump_state)
+        mqtt.publish('Frosty/state/salt', verify_salt_state)
         logging.info("REST API - Pump turned off")
         return jsonify({"message": "Pump successfully turned off"})
         return jsonify({"message": "Salt successfully turned off"})
@@ -318,8 +318,8 @@ def pump_toggle():
         GPIO.output(SALT, GPIO.HIGH)
         verify_pump_state = GPIO.input(PUMP)
         verify_salt_state = GPIO.input(SALT)
-        mqtt.publish('state/pump', verify_pump_state)
-        mqtt.publish('state/salt', verify_salt_state)
+        mqtt.publish('Frosty/state/pump', verify_pump_state)
+        mqtt.publish('Frosty/state/salt', verify_salt_state)
         logging.info("REST API - Pump turned on")
         return jsonify({"message": "Pump successfully turned on"})
         return jsonify({"message": "Salt successfully turned on"})
@@ -336,25 +336,25 @@ def salt_toggle():
         GPIO.output(SALT, GPIO.LOW)
         salt_state=GPIO.input(SALT)
         logging.info("REST API - Salt turned off")
-        mqtt.publish('state/salt', salt_state)
+        mqtt.publish('Frosty/state/salt', salt_state)
         return jsonify(message="Salt system successfully turned off")
     elif pump_status == 1 and salt_status == 0:
         GPIO.output(SALT, GPIO.HIGH)
         salt_state=GPIO.input(SALT)
         logging.info("REST API - Salt turned on")
-        mqtt.publish('state/salt', salt_state)
+        mqtt.publish('Frosty/state/salt', salt_state)
         return jsonify(message="Salt system successfully turned on")
     elif pump_status == 0 and salt_status == 0:
         GPIO.output(SALT, GPIO.LOW)
         salt_state=GPIO.input(SALT)
         logging.info("REST API - Warning - Can not turn on Salt system without the pump running. Salt system off")
-        mqtt.publish('state/salt', salt_state)
+        mqtt.publish('Frosty/state/salt', salt_state)
         return jsonify(message="Warning - Can not turn on Salt system without the pump running. Salt system off")
     elif pump_status == 0 and salt_status == 1:
         GPIO.output(SALT, GPIO.LOW)
         salt_state=GPIO.input(SALT)
         logging.info("REST API - Warning - Your salt system was found to be on without the pump. Salt off, check you system for possible damage")
-        mqtt.publish('state/salt', salt_state)
+        mqtt.publish('Frosty/state/salt', salt_state)
         return jsonify(message="Warning - Your salt system was found to be on without the pump. Salt off, check you system for possible damage")
     else:
         salt_state=GPIO.input(SALT)
@@ -369,13 +369,13 @@ def light_toggle():
         GPIO.output(LIGHT, GPIO.LOW)
         light_state=GPIO.input(LIGHT)
         logging.info("REST API - Light turned off")
-        mqtt.publish('state/light', light_state)
+        mqtt.publish('Frosty/state/light', light_state)
         return jsonify(message="Light successfully turned off")
     elif status == 0:
         GPIO.output(LIGHT, GPIO.HIGH)
         light_state=GPIO.input(LIGHT)
         logging.info("REST API - Light turned on")
-        mqtt.publish('state/light', light_state)
+        mqtt.publish('Frosty/state/light', light_state)
         return jsonify(message="Light system successfully turned on")
     else:
         light_state=GPIO.input(LIGHT)
@@ -390,13 +390,13 @@ def aerator_toggle():
         GPIO.output(AERATOR, GPIO.LOW)
         aerator_state=GPIO.input(AERATOR)
         logging.info("REST API - Aerator turned off")
-        mqtt.publish('state/aerator', aerator_state)
+        mqtt.publish('Frosty/state/aerator', aerator_state)
         return jsonify(message="AERATOR successfully turned off")
     elif status == 0:
         GPIO.output(AERATOR, GPIO.HIGH)
         aerator_state=GPIO.input(AERATOR)
         logging.info("REST API - Aerator turned on")
-        mqtt.publish('state/aerator', aerator_state)
+        mqtt.publish('Frosty/state/aerator', aerator_state)
         return jsonify(message="AERATOR successfully turned on")
     else:
         aerator_state=GPIO.input(AERATOR)
@@ -411,13 +411,13 @@ def aux1_toggle():
         GPIO.output(AUX1, GPIO.LOW)
         aux1_state=GPIO.input(AUX1)
         logging.info("REST API - Aux1 turned off")
-        mqtt.publish('state/aux1', aux1_state)
+        mqtt.publish('Frosty/state/aux1', aux1_state)
         return jsonify(message="AUX1 successfully turned off")
     elif status == 0:
         GPIO.output(AUX1, GPIO.HIGH)
         aux1_state=GPIO.input(AUX1)
         logging.info("REST API - Aux1 turned on")
-        mqtt.publish('state/aux1', aux1_state)
+        mqtt.publish('Frosty/state/aux1', aux1_state)
         return jsonify(message="AUX1 successfully turned on")
     else:
         aux1_state=GPIO.input(AUX1)
@@ -432,13 +432,13 @@ def aux2_toggle():
         GPIO.output(AUX2, GPIO.LOW)
         aux2_state=GPIO.input(AUX2)
         logging.info("REST API - Aux2 turned off")
-        mqtt.publish('state/aux2', aux2_state)
+        mqtt.publish('Frosty/state/aux2', aux2_state)
         return jsonify(message="AUX2 successfully turned off")
     elif status == 0:
         GPIO.output(AUX2, GPIO.HIGH)
         aux2_state=GPIO.input(AUX2)
         logging.info("REST API - Aux2 turned on")
-        mqtt.publish('state/aux2', aux2_state)
+        mqtt.publish('Frosty/state/aux2', aux2_state)
         return jsonify(message="AUX2 successfully turned on")
     else:
         logging.info("REST API - Boom! Something blew up, check your settings and try again - Aux2 Toggle")
@@ -452,13 +452,13 @@ def aux3_toggle():
         GPIO.output(AUX3, GPIO.LOW)
         aux3_state=GPIO.input(AUX3)
         logging.info("REST API - Aux3 turned off")
-        mqtt.publish('state/aux3', aux3_state)
+        mqtt.publish('Frosty/state/aux3', aux3_state)
         return jsonify(message="AUX3 successfully turned off")
     elif status == 0:
         GPIO.output(AUX3, GPIO.HIGH)
         aux3_state=GPIO.input(AUX3)
         logging.info("REST API - Aux3 turned on")
-        mqtt.publish('state/aux3', aux3_state)
+        mqtt.publish('Frosty/state/aux3', aux3_state)
         return jsonify(message="AUX3 successfully turned on")
     else:
         aux3_state=GPIO.input(AUX3)
@@ -473,13 +473,13 @@ def aux4_toggle():
         GPIO.output(AUX4, GPIO.HIGH)
         aux4_state=GPIO.input(AUX4)
         logging.info("REST API - Aux4 turned on")
-        mqtt.publish('state/aux4', aux4_state)
+        mqtt.publish('Frosty/state/aux4', aux4_state)
         return jsonify(message="AUX4 successfully turned on")
     elif status == 1:
         GPIO.output(AUX4, GPIO.LOW)
         aux4_state=GPIO.input(AUX4)
         logging.info("REST API - Aux4 turned off")
-        mqtt.publish('state/aux4', aux4_state)
+        mqtt.publish('Frosty/state/aux4', aux4_state)
         return jsonify(message="AUX4 successfully turned off")
     else:
         logging.info("REST API - Boom! Something blew up, check your settings and try again - Aux4 Toggle")
