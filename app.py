@@ -62,6 +62,7 @@ GPIO.setup(SPEED2, GPIO.OUT)
 GPIO.setup(SPEED3, GPIO.OUT)
 GPIO.setup(SPEED4, GPIO.OUT)
 
+#looks at each of the SPEED outputs and returns which one is HIGH
 def speed_test():
     if GPIO.input(SPEED1) == 1:
         return 1
