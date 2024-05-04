@@ -205,10 +205,6 @@ def handle_mytopic(client, userdata, message):
         pump_status=int(GPIO.input(PUMP))
         salt_status=int(GPIO.input(SALT))
         aerator_status=int(GPIO.input(AERATOR))
-        aux1_status=int(GPIO.input(AUX1))
-        aux2_status=int(GPIO.input(AUX2))
-        aux3_status=int(GPIO.input(AUX3))
-        aux4_status=int(GPIO.input(AUX4))
 
         mqtt.publish('Frosty/state/light', light_status)
         mqtt.publish('Frosty/state/pump', pump_status)
