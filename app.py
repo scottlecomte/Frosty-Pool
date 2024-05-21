@@ -79,7 +79,9 @@ def set_speed(speed):
     GPIO.output(SPEED2, GPIO.LOW)
     GPIO.output(SPEED3, GPIO.LOW)
     GPIO.output(SPEED4, GPIO.LOW)
-    if speed == 1:
+    if speed == 0:
+        mqtt.publish('Frosty/state/speed', 0)
+    elif speed == 1:
         GPIO.output(SPEED1, GPIO.HIGH)
         mqtt.publish('Frosty/state/speed', 1)
     elif speed == 2:
