@@ -27,7 +27,6 @@ app.config['MQTT_PASSWORD'] = 'password' # Add your MQTT password or delete the 
 app.config['MQTT_REFRESH_TIME'] = 1.0  # refresh time in seconds
 mqtt = Mqtt(app)
 
-
 # Get inital temperature reading before scheduler starts
 temp_sensor1 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor1_ID)
 temp_sensor2 = W1ThermSensor(W1ThermSensor.THERM_SENSOR_DS18B20, temp_sensor2_ID)
@@ -102,7 +101,7 @@ mqtt.publish('Frosty/state/light', GPIO.input(LIGHT))
 mqtt.publish('Frosty/state/aerator', GPIO.input(AERATOR))
 mqtt.publish('Frosty/state/speed', speed_test())
 mqtt.publish('Frosty/toggle/light', "off")
-mqtt.publish('Frosty/toggle/pump', "off")
+mqtt.publish('Frosty/toggle/pump', "on")
 mqtt.publish('Frosty/toggle/salt', "off")
 mqtt.publish('Frosty/toggle/aerator', "off")
 
@@ -118,6 +117,7 @@ def mqtt_sensor_publish():
      log_sensor2 = str(sensor2_temp)
      logging.info("sensor2: " + log_sensor2)
 
+logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=mqtt_sensor_publish, trigger="interval", seconds=temp_sched)
 scheduler.start()
@@ -128,7 +128,7 @@ def handle_mytopic(client, userdata, message):
    with app.app_context():
     status=int(GPIO.input(PUMP))
     if status == 0 and message.payload.decode() == "on":
-        set_speed(4)
+ #       set_speed(4)
         GPIO.output(PUMP, GPIO.HIGH)
         GPIO.output(SALT, GPIO.HIGH)
         verify_pump_state = GPIO.input(SALT)
@@ -227,6 +227,7 @@ def handle_mytopic(client, userdata, message):
     with app.app_context():
         status=int(GPIO.input(AERATOR))
         if status == 1 and message.payload.decode() == "off":
+            set_speed(0)
             GPIO.output(AERATOR, GPIO.LOW)
             verify_state = GPIO.input(AERATOR)
             logging.info("MQTT - Aerator turned off")
@@ -239,7 +240,6 @@ def handle_mytopic(client, userdata, message):
             mqtt.publish('Frosty/state/aerator', verify_state)
         else:
             logging.info("MQTT - Aerator - Nah Bruh")
-
 
 #########################    REST TOGGLE   #############################
 
@@ -258,7 +258,7 @@ def pump_toggle():
         return jsonify({"message": "Pump successfully turned off"})
         return jsonify({"message": "Salt successfully turned off"})
     elif status == 0:
-        set_speed(4)
+  #      set_speed(4)
         GPIO.output(PUMP, GPIO.HIGH)
         GPIO.output(SALT, GPIO.HIGH)
         verify_pump_state = GPIO.input(PUMP)
@@ -333,6 +333,7 @@ def light_toggle():
 def aerator_toggle():
     status = GPIO.input(AERATOR)
     if status == 1:
+        set_speed(0)
         GPIO.output(AERATOR, GPIO.LOW)
         aerator_state=GPIO.input(AERATOR)
         logging.info("REST API - Aerator turned off")
